@@ -30,6 +30,7 @@ logging:
 
 resilience4j:
   retry:
+    retry-aspect-order: 2
     instances:
       fetchPost:
         max-attempts: 3
@@ -38,7 +39,29 @@ resilience4j:
           - org.springframework.web.client.HttpServerErrorException
           - java.io.IOException
           - com.resilience4j.lab.fault.SimulatedException
+          - java.lang.RuntimeException
         ignore-exceptions:
           - org.springframework.web.client.HttpClientErrorException
         enable-exponential-backoff: true
         exponential-backoff-multiplier: 2
+
+  circuit-breaker:
+    circuit-breaker-aspect-order: 1
+    instances:
+      fetchPost:
+        register-health-indicator: true
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 80
+        slow-call-duration-threshold: 2s
+        wait-duration-in-open-state: 10s
+        permitted-calls-in-half-open-state: 3
+        minimum-number-of-calls: 5
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - java.io.IOException
+          - com.resilience4j.lab.fault.SimulatedException
+        ignore-exceptions:
+          - org.springframework.web.client.HttpClientErrorException
