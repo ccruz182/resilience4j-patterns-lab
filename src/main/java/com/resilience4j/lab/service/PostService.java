@@ -5,9 +5,12 @@ import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -15,6 +18,7 @@ import org.springframework.stereotype.Service;
 public class PostService {
 
     private static final String INSTANCE_NAME = "fetchPost";
+    private static final String ASYNC_INSTANCE_NAME = "fetchPostAsync";
 
     private final JsonPlaceholderClient jsonPlaceholderClient;
 
@@ -29,6 +33,21 @@ public class PostService {
     public String fetchComments(int postId) {
         log.debug("Attempting to fetch comments for postId: {}", postId);
         return jsonPlaceholderClient.getComments(postId);
+    }
+
+    @TimeLimiter(name = ASYNC_INSTANCE_NAME, fallbackMethod = "fetchPostAsyncFallback")
+    @CircuitBreaker(name = ASYNC_INSTANCE_NAME, fallbackMethod = "fetchPostAsyncFallback")
+    public CompletableFuture<String> fetchPostAsync(int postId) {
+        log.debug("Attempting async fetch for postId: {}", postId);
+        return jsonPlaceholderClient.getPostAsync(postId);
+    }
+
+    private CompletableFuture<String> fetchPostAsyncFallback(int postId, Throwable ex) {
+        log.warn("[ASYNC-FALLBACK] postId={}. Cause: {}", postId, ex.getMessage());
+        return CompletableFuture.completedFuture(
+                String.format("{\"error\": \"Request timed out or unavailable\", " +
+                                "\"postId\": %d, \"exception\": \"%s\"}",
+                        postId, ex.getClass().getSimpleName()));
     }
 
     private String fetchCommentsBulkheadFallback(int postId, Throwable ex) {

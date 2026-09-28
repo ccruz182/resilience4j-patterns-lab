@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.concurrent.CompletableFuture;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/posts")
@@ -23,5 +25,11 @@ public class PostController {
     @GetMapping("/{id}/comments")
     public ResponseEntity<String> getComments(@PathVariable int id) {
         return ResponseEntity.ok(postService.fetchComments(id));
+    }
+
+    @GetMapping("/{id}/async")
+    public CompletableFuture<ResponseEntity<String>> getPostAsync(@PathVariable int id) {
+        return postService.fetchPostAsync(id)
+                .thenApply(ResponseEntity::ok);
     }
 }

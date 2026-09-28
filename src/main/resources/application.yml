@@ -71,3 +71,9 @@ resilience4j:
       fetchComments:
         max-concurrent-calls: 6
         max-wait-duration: 0ms
+
+  time-limiter:
+    instances:
+      fetchPostAsync:
+        timeout-duration: 2s
+        cancel-running-future: true

@@ -33,4 +33,10 @@ public class FaultSimulatorController {
         faultSimulator.reset();
         return ResponseEntity.ok("Fault simulator reset");
     }
+
+    @PostMapping("/delay/{millis}")
+    public ResponseEntity<String> addDelay(@PathVariable long millis) {
+        faultSimulator.addDelay(millis);
+        return ResponseEntity.ok("Configured delay of " + millis + "ms");
+    }
 }

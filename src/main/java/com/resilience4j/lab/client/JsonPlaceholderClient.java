@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.concurrent.CompletableFuture;
+
 @Slf4j
 @Component
 public class JsonPlaceholderClient {
@@ -34,5 +36,14 @@ public class JsonPlaceholderClient {
         String url = baseUrl + "/posts/" + postId + "/comments";
         log.debug("Calling external API: GET {}", url);
         return restTemplate.getForObject(url, String.class);
+    }
+
+    public CompletableFuture<String> getPostAsync(int postId) {
+        String url = baseUrl + "/posts/" + postId;
+        log.debug("Calling external API async: GET {}", url);
+        return CompletableFuture.supplyAsync(() -> {
+            faultSimulator.checkAndThrowIfNeeded("getPostAsync");  // ← delay dentro del Future
+            return restTemplate.getForObject(url, String.class);
+        });
     }
 }

@@ -4,8 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.*;
 
 class FaultSimulatorTest {
 
@@ -112,5 +111,32 @@ class FaultSimulatorTest {
     void shouldNotThrowByDefault() {
         assertThatNoException()
                 .isThrownBy(() -> faultSimulator.checkAndThrowIfNeeded("test"));
+    }
+
+    @Test
+    @DisplayName("Should add delay on each call")
+    void shouldAddDelayOnEachCall() {
+        faultSimulator.addDelay(100);
+
+        long start = System.currentTimeMillis();
+        assertThatNoException()
+                .isThrownBy(() -> faultSimulator.checkAndThrowIfNeeded("test"));
+        long elapsed = System.currentTimeMillis() - start;
+
+        assertThat(elapsed).isGreaterThanOrEqualTo(100);
+    }
+
+    @Test
+    @DisplayName("Should reset delay to zero")
+    void shouldResetDelay() {
+        faultSimulator.addDelay(500);
+        faultSimulator.reset();
+
+        long start = System.currentTimeMillis();
+        assertThatNoException()
+                .isThrownBy(() -> faultSimulator.checkAndThrowIfNeeded("test"));
+        long elapsed = System.currentTimeMillis() - start;
+
+        assertThat(elapsed).isLessThan(100);
     }
 }

@@ -17,6 +17,8 @@ public class FaultSimulator {
 
     private int failForFirstNCalls = 0;
     private boolean alwaysFail = false;
+    private long delayMillis = 0;
+
 
     /**
      * Configures the simulator to fail for the first N calls, then succeed.
@@ -42,6 +44,7 @@ public class FaultSimulator {
     public void reset() {
         this.alwaysFail = false;
         this.failForFirstNCalls = 0;
+        this.delayMillis = 0;
         this.callCount.set(0);
         log.info("[FAULT-SIM] Reset — no failures will be simulated");
     }
@@ -51,6 +54,16 @@ public class FaultSimulator {
      * Throws RuntimeException if the simulator is configured to fail.
      */
     public void checkAndThrowIfNeeded(String context) {
+        // delay simulation
+        if (delayMillis > 0) {
+            try {
+                log.warn("[FAULT-SIM] Adding delay of {}ms on context='{}'", delayMillis, context);
+                Thread.sleep(delayMillis);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
         if (alwaysFail) {
             log.warn("[FAULT-SIM] Forcing failure on context='{}'", context);
             throw new SimulatedException("Simulated failure on: " + context);
@@ -58,8 +71,14 @@ public class FaultSimulator {
 
         int current = callCount.incrementAndGet();
         if (current <= failForFirstNCalls) {
-            log.warn("[FAULT-SIM] Forcing failure #{} of {} on context='{}'", current, failForFirstNCalls, context);
+            log.warn("[FAULT-SIM] Forcing failure #{} of {} on context='{}'",
+                    current, failForFirstNCalls, context);
             throw new SimulatedException("Simulated failure #" + current + " on: " + context);
         }
+    }
+
+    public void addDelay(long millis) {
+        this.delayMillis = millis;
+        log.info("[FAULT-SIM] Configured delay of {}ms", millis);
     }
 }

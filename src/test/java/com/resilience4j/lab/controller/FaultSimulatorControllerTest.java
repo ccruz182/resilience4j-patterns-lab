@@ -51,4 +51,14 @@ class FaultSimulatorControllerTest {
 
         verify(faultSimulator).reset();
     }
+
+    @Test
+    @DisplayName("Should configure delay")
+    void shouldConfigureDelay() throws Exception {
+        mockMvc.perform(post("/fault-simulator/delay/3000"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Configured delay of 3000ms"));
+
+        verify(faultSimulator).addDelay(3000L);
+    }
 }

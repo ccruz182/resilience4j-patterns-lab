@@ -10,6 +10,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -96,6 +99,32 @@ class JsonPlaceholderClientTest {
         try {
             client.getComments(1);
         } catch (SimulatedException ignored) {}
+
+        verifyNoInteractions(restTemplate);
+    }
+
+    @Test
+    @DisplayName("Should return CompletableFuture with response for async call")
+    void shouldReturnCompletableFutureWithResponse() throws ExecutionException, InterruptedException {
+        when(restTemplate.getForObject(
+                "https://jsonplaceholder.typicode.com/posts/1", String.class))
+                .thenReturn("{\"id\": 1}");
+
+        CompletableFuture<String> result = client.getPostAsync(1);
+
+        assertThat(result.get()).isEqualTo("{\"id\": 1}");
+        verify(restTemplate).getForObject(
+                "https://jsonplaceholder.typicode.com/posts/1", String.class);
+    }
+
+    @Test
+    @DisplayName("Should not call async API when fault is simulated")
+    void shouldNotCallAsyncApiWhenFaultIsSimulated() {
+        doThrow(new SimulatedException("Forced fail"))
+                .when(faultSimulator).checkAndThrowIfNeeded(anyString());
+
+        assertThatThrownBy(() -> client.getPostAsync(1).get())
+                .hasCauseInstanceOf(SimulatedException.class);
 
         verifyNoInteractions(restTemplate);
     }
