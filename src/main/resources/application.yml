@@ -1,0 +1,44 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: resilience4j-patterns-lab
+
+# Actuator: expose health + circuit breaker metrics
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, circuitbreakers, retries
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
+# External API
+external:
+  api:
+    base-url: https://jsonplaceholder.typicode.com
+
+logging:
+  level:
+    com.resilience4j.lab: DEBUG
+    io.github.resilience4j: INFO
+
+resilience4j:
+  retry:
+    instances:
+      fetchPost:
+        max-attempts: 3
+        wait-duration: 500ms
+        retry-exceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - java.io.IOException
+          - com.resilience4j.lab.fault.SimulatedException
+        ignore-exceptions:
+          - org.springframework.web.client.HttpClientErrorException
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
