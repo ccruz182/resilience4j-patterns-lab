@@ -72,4 +72,31 @@ class JsonPlaceholderClientTest {
 
         verifyNoInteractions(restTemplate);
     }
+
+    @Test
+    @DisplayName("Should call correct comments URL and return response")
+    void shouldCallCorrectCommentsUrlAndReturnResponse() {
+        when(restTemplate.getForObject(
+                "https://jsonplaceholder.typicode.com/posts/1/comments", String.class))
+                .thenReturn("[{\"id\": 1}]");
+
+        String result = client.getComments(1);
+
+        assertThat(result).isEqualTo("[{\"id\": 1}]");
+        verify(restTemplate).getForObject(
+                "https://jsonplaceholder.typicode.com/posts/1/comments", String.class);
+    }
+
+    @Test
+    @DisplayName("Should not call comments API when fault is simulated")
+    void shouldNotCallCommentsApiWhenFaultIsSimulated() {
+        doThrow(new SimulatedException("Forced fail"))
+                .when(faultSimulator).checkAndThrowIfNeeded(anyString());
+
+        try {
+            client.getComments(1);
+        } catch (SimulatedException ignored) {}
+
+        verifyNoInteractions(restTemplate);
+    }
 }

@@ -65,3 +65,9 @@ resilience4j:
           - com.resilience4j.lab.fault.SimulatedException
         ignore-exceptions:
           - org.springframework.web.client.HttpClientErrorException
+
+  bulkhead:
+    instances:
+      fetchComments:
+        max-concurrent-calls: 6
+        max-wait-duration: 0ms

@@ -19,4 +19,9 @@ public class PostController {
     public ResponseEntity<String> getPost(@PathVariable int id) {
         return ResponseEntity.ok(postService.fetchPost(id));
     }
+
+    @GetMapping("/{id}/comments")
+    public ResponseEntity<String> getComments(@PathVariable int id) {
+        return ResponseEntity.ok(postService.fetchComments(id));
+    }
 }

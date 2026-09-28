@@ -28,4 +28,11 @@ public class JsonPlaceholderClient {
         log.debug("Calling external API: GET {}", url);
         return restTemplate.getForObject(url, String.class);
     }
+
+    public String getComments(int postId) {
+        faultSimulator.checkAndThrowIfNeeded("getComments");
+        String url = baseUrl + "/posts/" + postId + "/comments";
+        log.debug("Calling external API: GET {}", url);
+        return restTemplate.getForObject(url, String.class);
+    }
 }

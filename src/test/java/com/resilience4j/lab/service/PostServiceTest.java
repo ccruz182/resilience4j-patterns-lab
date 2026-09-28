@@ -2,6 +2,8 @@ package com.resilience4j.lab.service;
 
 import com.resilience4j.lab.client.JsonPlaceholderClient;
 import com.resilience4j.lab.fault.SimulatedException;
+import io.github.resilience4j.bulkhead.BulkheadConfig;
+import io.github.resilience4j.bulkhead.BulkheadRegistry;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
@@ -33,8 +35,12 @@ class PostServiceTest {
 
     private CircuitBreaker circuitBreaker;
 
+    @Autowired
+    private BulkheadRegistry bulkheadRegistry;
+
     @BeforeEach
     void setUp() {
+        // Circuit Breaker
         CircuitBreakerConfig testConfig = CircuitBreakerConfig.custom()
                 .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
                 .slidingWindowSize(5)
@@ -48,6 +54,15 @@ class PostServiceTest {
 
         circuitBreakerRegistry.remove("fetchPost");
         circuitBreaker = circuitBreakerRegistry.circuitBreaker("fetchPost", testConfig);
+
+        // Bulkhead — suficiente para tests secuenciales
+        BulkheadConfig bulkheadConfig = BulkheadConfig.custom()
+                .maxConcurrentCalls(100)
+                .maxWaitDuration(Duration.ofMillis(0))
+                .build();
+
+        bulkheadRegistry.remove("fetchPost");
+        bulkheadRegistry.bulkhead("fetchPost", bulkheadConfig);
     }
 
 

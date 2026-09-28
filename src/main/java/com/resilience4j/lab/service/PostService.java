@@ -1,6 +1,7 @@
 package com.resilience4j.lab.service;
 
 import com.resilience4j.lab.client.JsonPlaceholderClient;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -24,12 +25,18 @@ public class PostService {
         return jsonPlaceholderClient.getPost(postId);
     }
 
-    // Retry fallback — se activa cuando se agotan los reintentos
-    private String fetchPostRetryFallback(int postId, Throwable ex) {
-        log.warn("[RETRY-FALLBACK] All retry attempts exhausted for postId={}. Cause: {}",
+    @Bulkhead(name = "fetchComments", fallbackMethod = "fetchCommentsBulkheadFallback")
+    public String fetchComments(int postId) {
+        log.debug("Attempting to fetch comments for postId: {}", postId);
+        return jsonPlaceholderClient.getComments(postId);
+    }
+
+    private String fetchCommentsBulkheadFallback(int postId, Throwable ex) {
+        log.warn("[BULKHEAD-FALLBACK] Too many concurrent calls for comments postId={}. Cause: {}",
                 postId, ex.getMessage());
-        // Re-lanza para que el Circuit Breaker lo registre como fallo
-        throw new RuntimeException(ex);
+        return String.format(
+                "{\"error\": \"Too many concurrent requests\", \"postId\": %d, \"exception\": \"%s\"}",
+                postId, ex.getClass().getSimpleName());
     }
 
     // Circuit Breaker fallback — se activa cuando el CB está OPEN
